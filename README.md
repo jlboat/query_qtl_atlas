@@ -28,7 +28,8 @@ optional arguments:
 
 required arguments:
   --input INPUT         The name of the input file (CSV). File structure:
-                        markerName,chromosome,position
+                        markerName,chromosome,position Or: markerName,chromosome,start,stop -- both
+                        without a header
   --trait TRAIT         The trait table from which QTL are pulled. Trait categories include: leaf,
                         maturity, panicle, resistance_abiotic, resistance_biotic, stem_composition,
                         and stem_morphology
