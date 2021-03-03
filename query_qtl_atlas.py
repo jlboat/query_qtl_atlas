@@ -23,7 +23,8 @@ def parse_arguments():
             type=str, 
             required=True, 
             help="The name of the input file (CSV). " + 
-            "File structure: markerName,chromosome,position",
+            "File structure: markerName,chromosome,position " +
+            "Or: markerName,chromosome,start,stop -- both without a header",
             action="store")
 
     requiredNamed.add_argument(
@@ -129,7 +130,14 @@ def find_overlapping_features(input_file, output,
             split_line = line.split(",")
             chrom = int(split_line[1])
             position = int(split_line[2])
-            results = engine.execute(f"SELECT * FROM {trait} WHERE {additional_filter} Chr == {chrom} AND {position} BETWEEN (Start - {distance}) AND (Stop + {distance})").fetchall()
+            try:
+                stop = split_line[3]
+            except IndexError:
+                stop = ""
+            if stop == "":
+                results = engine.execute(f"SELECT * FROM {trait} WHERE {additional_filter} Chr == {chrom} AND {position} BETWEEN (Start - {distance}) AND (Stop + {distance})").fetchall()
+            else:
+                results = engine.execute(f"SELECT * FROM {trait} WHERE {additional_filter} Chr == {chrom} AND (({position} BETWEEN (Start - {distance}) AND (Stop + {distance})) OR ({stop} BETWEEN (Start - {distance}) AND (Stop + {distance})) OR ({position} <= Start AND {stop} >= Stop))").fetchall()
             for result in results:
                 writeable_results = [str(i) for i in list(result[1:])]
                 url_link = "( https://aussorgm.org.au/" +\
@@ -139,7 +147,7 @@ def find_overlapping_features(input_file, output,
                             .split()) + " )"
                 span = [str(int(writeable_results[9]) - int(writeable_results[8]))]
                 writeable_results[1] = writeable_results[1] + url_link
-                f.write(",".join(split_line + 
+                f.write(",".join(split_line[:3] + 
                     [writeable_results[0]] + span 
                     + [writeable_results[3]] + writeable_results[1:3] + writeable_results[4:] ) + "\n")
 
